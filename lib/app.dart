@@ -9,6 +9,7 @@ import 'presentation/navigation/app_shell.dart';
 import 'presentation/onboarding/cubit/onboarding_cubit.dart';
 import 'presentation/onboarding/screens/currency_setup_screen.dart';
 import 'presentation/shared/cubit/theme_cubit.dart';
+import 'services/notification_service.dart';
 
 class TrackrApp extends StatelessWidget {
   final bool onboardingDone;
@@ -33,6 +34,7 @@ class TrackrApp extends StatelessWidget {
                     create: (_) => OnboardingCubit(
                       settings: sl<SettingsRepository>(),
                       categories: sl<CategoryRepository>(),
+                      notifications: sl<NotificationService>(),
                     ),
                     child: const CurrencySetupScreen(),
                   ),

@@ -4,18 +4,22 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/category_defaults.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../data/repositories/category_repository.dart';
+import '../../../services/notification_service.dart';
 
 part 'onboarding_state.dart';
 
 class OnboardingCubit extends Cubit<OnboardingState> {
   final SettingsRepository _settings;
   final CategoryRepository _categories;
+  final NotificationService _notifications;
 
   OnboardingCubit({
     required SettingsRepository settings,
     required CategoryRepository categories,
+    required NotificationService notifications,
   })  : _settings = settings,
         _categories = categories,
+        _notifications = notifications,
         super(const OnboardingState());
 
   void selectCurrency(CurrencyOption currency) {
@@ -47,6 +51,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         }
       }
 
+      // Request notification permission (Android 13+ requires runtime request)
+      await _notifications.requestPermission();
+
       // Mark onboarding as done
       await _settings.set(AppConstants.keyOnboardingDone, 'true');
 
@@ -56,3 +63,4 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     }
   }
 }
+

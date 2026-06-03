@@ -1,126 +1,95 @@
 # Trackr
 
-A premium personal expense and task tracking mobile application built with Flutter.
-
-## Overview
-
-Trackr helps you stay on top of your finances and schedule by combining expense tracking, budget management, and task scheduling into a single, cohesive experience. It is designed for both Android and iOS with a clean, modern UI and support for dark/light themes.
+A premium personal expense & task tracker built with Flutter — designed for clean architecture, local-first storage, and future cloud migration.
 
 ## Features
 
 ### Home (Command Center)
-- Monthly budget progress bar with visual warning states (on track / nearing limit / exceeded)
-- Donut chart showing spending distribution across categories
-- "Next Up" card displaying today's task and the next scheduled one, ordered by importance
-- Spending trend line chart with toggles for 7-day, 30-day, and 1-year views
-- Category alert strip highlighting categories nearing or exceeding their individual spend limits
+- **Budget Progress** — Visual progress bar comparing total spent vs. monthly budget, with safe/warning/over states
+- **Category Donut Chart** — Interactive pie chart showing spending distribution across categories
+- **Category Alerts** — Horizontal alert chips for categories nearing or exceeding their individual budget limits
+- **Next Up** — Displays the next 2 upcoming tasks with importance levels and time labels
+- **Spending Trend** — Line chart of daily spending with toggleable 7-day / 30-day / 1-year views
 
-### Analytics & Records
-- Full expense history ordered by most recent
-- Time-of-day tagging on every record (Morning / Noon / Evening / Night)
-- Search by keyword
-- Filter by date range with quick presets (Today, This Week, This Month) or custom interval
-- Filter by category with drill-down into a category-specific record view
+### Analytics (Historical View)
+- Full expense history with infinite scroll pagination
+- Category filter chips and date range picker
+- Search by description
+- Swipe-to-delete expense records
+- Time-of-day tags (Morning, Noon, Evening, Night)
 
 ### Schedule (Input Hub)
-- Add an expense with amount, category, optional description, and auto-detected time
-- Schedule a task (generic or planned expense) with title, importance level, date, time, and an optional reminder
-- Importance levels: Low, Medium, High — used to prioritise the Next Up list on the home screen
-- Recurrence options: None, Daily, Weekly, Monthly, Yearly
-- "Remind me X minutes before" triggers both an in-app and a push notification
-- Scheduled expense tasks remain open until the user explicitly marks them as done, at which point an expense record is automatically created
+- **Add Expense** tab — Amount, category, description, date/time picker
+- **Add Task** tab — Title, description, importance selector, date/time, recurrence options
+- Planned expense toggle that links tasks to automatic expense creation
+- Category-colored dropdowns for quick identification
 
 ### Settings
-- Toggle between dark and light themes
-- Set and update the global monthly budget
-- Manage categories — edit name, color, and per-category spend limit for any category; delete custom categories; system categories (Food, Travel, Entertainment) are protected from deletion
-- Add custom categories with a name and color
-- Drag to reorder categories
-- Export expense records as a CSV file
+- **Monthly Budget** — Set or update the global monthly budget
+- **Dark Mode** — Toggle between light and dark themes
+- **CSV Export** — Export all expenses as a `.csv` file via the system share sheet
+- **Category Management** — Add custom categories with color picker and optional per-category budget limits
+- System categories (Food, Travel, Entertainment) are protected from deletion
 
-## Tech Stack
-
-| Concern | Library |
-|---------|---------|
-| Framework | Flutter (Android + iOS) |
-| State Management | flutter_bloc (BLoC / Cubit) |
-| Local Database | Drift (type-safe SQLite) |
-| Charts | fl_chart |
-| Notifications | flutter_local_notifications |
-| Dependency Injection | get_it |
-| Animations | flutter_animate |
-| CSV Export | csv + share_plus |
-| Fonts | Google Fonts (Inter) |
+### Onboarding
+- Currency selection screen on first launch
+- Seeds default system categories automatically
 
 ## Architecture
 
-The project follows a clean architecture with three layers:
-
 ```
-Presentation  →  Domain  →  Data
-(BLoC/Screens)   (Entities,  (Drift DAOs,
-                  Repo        Repository
-                  Interfaces) Implementations)
+lib/
+├── core/               # Theme, constants, DI, utilities
+├── data/               # Database (Drift), DAOs, repository implementations
+├── domain/             # Pure entities and repository interfaces
+├── presentation/       # BLoC/Cubit + UI screens
+│   ├── home/
+│   ├── analytics/
+│   ├── schedule/
+│   ├── settings/
+│   ├── onboarding/
+│   ├── navigation/     # AppShell with bottom nav
+│   └── shared/         # ThemeCubit
+└── services/           # Notifications, CSV export
 ```
 
-The repository pattern ensures that migrating from local Drift storage to a cloud backend (Firestore / Supabase) in the future requires only new repository implementations — no changes to the UI or business logic.
+**Design patterns:**
+- **Clean Architecture** — `domain/` ↔ `data/` separation via abstract repository interfaces
+- **BLoC/Cubit** — Each screen has its own Cubit for state management
+- **Repository Pattern** — All data access goes through repositories; swap implementations for cloud migration
+- **Drift ORM** — Typed SQL with generated code for local SQLite storage
 
-## Database
+## Tech Stack
 
-Five Drift tables: `categories`, `expenses`, `tasks`, `budgets`, `app_settings`.
-
-Per-category spend limits are stored on the `categories` table alongside the category itself. All categories (system and custom) always appear together in every selection UI. System categories carry an `is_system` flag that prevents deletion but allows full editing.
+| Layer | Technology |
+|-------|-----------|
+| UI | Flutter (Material 3) |
+| State | flutter_bloc / Cubit |
+| Database | Drift (SQLite) |
+| Charts | fl_chart |
+| Animations | flutter_animate |
+| DI | get_it |
+| Notifications | flutter_local_notifications |
+| CSV | Custom export service |
+| Formatting | intl |
 
 ## Getting Started
-
-### Prerequisites
-- Flutter SDK >= 3.x
-- Dart SDK >= 3.x
-- Android Studio or Xcode for platform tooling
-
-### Setup
 
 ```bash
 # Install dependencies
 flutter pub get
 
 # Generate Drift database code
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 
-# Run on a connected device or emulator
+# Run the app
 flutter run
 ```
 
-### First Launch
+## Future Roadmap
 
-On first launch the app asks you to select your preferred currency. After that, you land directly on the home screen. Budget amount and category configuration can be adjusted any time from the Settings tab.
-
-## Project Structure
-
-```
-lib/
-├── core/           # Theme, constants, utilities, DI
-├── data/           # Drift database, DAOs, repository implementations
-├── domain/         # Entities, repository interfaces
-├── presentation/   # Screens, widgets, cubits (one folder per feature)
-└── services/       # Notification service, CSV export service
-```
-
-## Roadmap
-
-### v1 (Current)
-- Local storage with Drift
-- All core features listed above
-
-### v2 (Planned)
-- Multiple wallets / accounts (Cash, Bank, UPI, Credit Card)
-- Cloud sync with user authentication
-- Data migration from local to cloud with zero data loss
-
-### v3 (Future)
-- Spending streaks and achievement badges
-- Collaborative budgets
-
-## License
-
-MIT
+- Cloud migration (Firestore) with local-to-cloud data sync
+- Authentication layer
+- Multiple wallets
+- Streaks & badges
+- Push notifications for task reminders

@@ -30,32 +30,31 @@ class HomeCubit extends Cubit<HomeState> {
       final monthStart = DateHelper.startOfMonth(now);
       final monthEnd = DateHelper.endOfMonth(now);
 
-      // Load all data in parallel
-      final results = await Future.wait([
-        _expenses.getTotalSpent(from: monthStart, to: monthEnd),
-        _categories.getAll(),
-        _categories.getSpendingPerCategory(from: monthStart, to: monthEnd),
-        _tasks.getNextUp(),
-        _budgets.getActive(),
-        _loadDailyTotals(state.trendDays),
-      ]);
+      // Load data concurrently
+      final totalSpentFuture = _expenses.getTotalSpent(from: monthStart, to: monthEnd);
+      final categoriesFuture = _categories.getAll();
+      final catSpendingFuture = _categories.getSpendingPerCategory(from: monthStart, to: monthEnd);
+      final nextUpFuture = _tasks.getNextUp();
+      final budgetFuture = _budgets.getActive();
+      final dailyTotalsFuture = _loadDailyTotals(state.trendDays);
 
-      final totalSpent = results[0] as double;
-      final categories = results[1] as List;
-      final catSpending = results[2] as Map<int, double>;
-      final nextUp = results[3] as List;
-      final budget = results[4];
-      final dailyTotals = results[5] as Map<DateTime, double>;
+      final totalSpent = await totalSpentFuture;
+      final categories = await categoriesFuture;
+      final catSpending = await catSpendingFuture;
+      final nextUp = await nextUpFuture;
+      final budget = await budgetFuture;
+      final dailyTotals = await dailyTotalsFuture;
 
       emit(state.copyWith(
         status: HomeStatus.loaded,
         totalSpent: totalSpent,
         budgetAmount: budget?.amount,
-        categories: List.from(categories),
+        categories: categories,
         categorySpending: catSpending,
-        nextUpTasks: List.from(nextUp),
+        nextUpTasks: nextUp,
         dailyTotals: dailyTotals,
       ));
+
     } catch (e) {
       emit(state.copyWith(status: HomeStatus.error, error: e.toString()));
     }

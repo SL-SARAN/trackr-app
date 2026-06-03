@@ -5,6 +5,7 @@ import '../../data/repositories/category_repository.dart';
 import '../../data/repositories/expense_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/task_repository.dart';
+import '../../services/notification_service.dart';
 
 final sl = GetIt.instance;
 
@@ -25,4 +26,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => TaskRepository(sl()));
   sl.registerLazySingleton(() => BudgetRepository(sl()));
   sl.registerLazySingleton(() => SettingsRepository(sl()));
+
+  // --- Services ---
+  sl.registerLazySingleton(() => NotificationService());
 }
