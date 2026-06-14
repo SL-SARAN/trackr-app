@@ -120,11 +120,23 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                                       ?.copyWith(fontSize: 9)),
                             )
                           else
-                            IconButton(
-                              icon: Icon(Icons.delete_outline,
-                                  size: 20,
-                                  color: theme.colorScheme.error),
-                              onPressed: () => _deleteCategory(cat),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit_outlined,
+                                      size: 20,
+                                      color: theme.colorScheme.primary),
+                                  onPressed: () =>
+                                      _showCategoryDialog(context, existing: cat),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete_outline,
+                                      size: 20,
+                                      color: theme.colorScheme.error),
+                                  onPressed: () => _deleteCategory(cat),
+                                ),
+                              ],
                             ),
                         ],
                       ),
@@ -145,96 +157,237 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     int colorIndex = existing != null
         ? AppColors.categoryPalette.indexWhere((c) => c.toARGB32() == existing.color.toARGB32())
         : 0;
-    if (colorIndex < 0) colorIndex = 0;
+    if (colorIndex < 0) colorIndex = -1; // custom color
+    Color? customColor = colorIndex < 0 ? existing?.color : null;
+
+    // HSL state for custom picker
+    double hue = customColor != null
+        ? HSLColor.fromColor(customColor).hue
+        : 200;
+    double saturation = customColor != null
+        ? HSLColor.fromColor(customColor).saturation
+        : 0.7;
+    double lightness = customColor != null
+        ? HSLColor.fromColor(customColor).lightness
+        : 0.5;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(existing != null ? 'Edit Category' : 'New Category'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: limitCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                    labelText: 'Budget Limit (optional)'),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: List.generate(
-                    AppColors.categoryPalette.length, (i) {
-                  final c = AppColors.categoryPalette[i];
-                  final isSelected = i == colorIndex;
-                  return GestureDetector(
-                    onTap: () => setDialogState(() => colorIndex = i),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: c,
-                        shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(
-                                color: Theme.of(ctx).colorScheme.onSurface,
-                                width: 2)
-                            : null,
+        builder: (ctx, setDialogState) {
+          final selectedColor = colorIndex >= 0
+              ? AppColors.categoryPalette[colorIndex]
+              : (customColor ?? HSLColor.fromAHSL(1, hue, saturation, lightness).toColor());
+
+          return AlertDialog(
+            title: Text(existing != null ? 'Edit Category' : 'New Category'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameCtrl,
+                    autofocus: true,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: limitCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                        labelText: 'Budget Limit (optional)'),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ...List.generate(
+                          AppColors.categoryPalette.length, (i) {
+                        final c = AppColors.categoryPalette[i];
+                        final isSelected = colorIndex == i;
+                        return GestureDetector(
+                          onTap: () => setDialogState(() {
+                            colorIndex = i;
+                            customColor = null;
+                          }),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: c,
+                              shape: BoxShape.circle,
+                              border: isSelected
+                                  ? Border.all(
+                                      color: Theme.of(ctx).colorScheme.onSurface,
+                                      width: 2)
+                                  : null,
+                            ),
+                            child: isSelected
+                                ? const Icon(Icons.check,
+                                    color: Colors.white, size: 16)
+                                : null,
+                          ),
+                        );
+                      }),
+                      // Custom color "+" button
+                      GestureDetector(
+                        onTap: () => setDialogState(() {
+                          colorIndex = -1;
+                          customColor = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                        }),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: colorIndex == -1
+                                  ? Theme.of(ctx).colorScheme.onSurface
+                                  : Theme.of(ctx).colorScheme.outline.withValues(alpha: 0.4),
+                              width: colorIndex == -1 ? 2 : 1,
+                            ),
+                            color: colorIndex == -1
+                                ? customColor?.withValues(alpha: 0.3)
+                                : null,
+                          ),
+                          child: Icon(
+                            Icons.add,
+                            size: 16,
+                            color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
                       ),
-                      child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 16)
-                          : null,
+                    ],
+                  ),
+
+                  // HSL sliders (shown only when custom color is selected)
+                  if (colorIndex == -1) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: selectedColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(ctx).colorScheme.outline.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text('Custom Color',
+                            style: Theme.of(ctx).textTheme.labelMedium),
+                      ],
                     ),
-                  );
-                }),
+                    const SizedBox(height: 8),
+                    // Hue
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 30,
+                          child: Text('H', style: Theme.of(ctx).textTheme.labelSmall),
+                        ),
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderThemeData(
+                              trackHeight: 8,
+                              activeTrackColor: HSLColor.fromAHSL(1, hue, 1, 0.5).toColor(),
+                              inactiveTrackColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                            ),
+                            child: Slider(
+                              value: hue,
+                              min: 0, max: 360,
+                              onChanged: (v) => setDialogState(() {
+                                hue = v;
+                                customColor = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                              }),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Saturation
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 30,
+                          child: Text('S', style: Theme.of(ctx).textTheme.labelSmall),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: saturation,
+                            min: 0, max: 1,
+                            onChanged: (v) => setDialogState(() {
+                              saturation = v;
+                              customColor = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                            }),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Lightness
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 30,
+                          child: Text('L', style: Theme.of(ctx).textTheme.labelSmall),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: lightness,
+                            min: 0.1, max: 0.9,
+                            onChanged: (v) => setDialogState(() {
+                              lightness = v;
+                              customColor = HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+                            }),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  final name = nameCtrl.text.trim();
+                  if (name.isEmpty) return;
+                  final limit = double.tryParse(limitCtrl.text.trim());
+                  final color = selectedColor;
+                  final repo = sl<CategoryRepository>();
+
+                  if (existing != null) {
+                    await repo.updateDetails(
+                      id: existing.id,
+                      name: name,
+                      color: color,
+                      budgetLimit: limit,
+                    );
+                  } else {
+                    await repo.create(
+                      name: name,
+                      color: color,
+                      budgetLimit: limit,
+                      sortOrder: _categories.length,
+                    );
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _load();
+                },
+                child: const Text('Save'),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final name = nameCtrl.text.trim();
-                if (name.isEmpty) return;
-                final limit = double.tryParse(limitCtrl.text.trim());
-                final color = AppColors.categoryPalette[colorIndex];
-                final repo = sl<CategoryRepository>();
-
-                if (existing != null) {
-                  await repo.updateDetails(
-                    id: existing.id,
-                    name: name,
-                    color: color,
-                    budgetLimit: limit,
-                  );
-                } else {
-                  await repo.create(
-                    name: name,
-                    color: color,
-                    budgetLimit: limit,
-                    sortOrder: _categories.length,
-                  );
-                }
-                if (ctx.mounted) Navigator.pop(ctx);
-                _load();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

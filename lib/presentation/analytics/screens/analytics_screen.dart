@@ -190,6 +190,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                 onDismissed: () => context
                                     .read<AnalyticsCubit>()
                                     .deleteExpense(expense.id),
+                                onTap: () => _onExpenseTap(
+                                    context, expense, state.categories),
                               ).animate().fadeIn(
                                     duration: 200.ms,
                                     delay: Duration(
@@ -220,6 +222,230 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       context.read<AnalyticsCubit>().setDateRange(picked.start, picked.end);
     }
   }
+
+  void _onExpenseTap(
+    BuildContext context,
+    ExpenseEntity expense,
+    List<CategoryEntity> categories,
+  ) {
+    final age = DateTime.now().difference(expense.createdAt);
+    if (age > const Duration(hours: 24)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+              'Expenses can only be edited within 24 hours of creation'),
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+    _showEditSheet(context, expense, categories);
+  }
+
+  void _showEditSheet(
+    BuildContext context,
+    ExpenseEntity expense,
+    List<CategoryEntity> categories,
+  ) {
+    final amountCtrl =
+        TextEditingController(text: expense.amount.toStringAsFixed(2));
+    final descCtrl =
+        TextEditingController(text: expense.description ?? '');
+    int selectedCategoryId = expense.categoryId;
+    DateTime selectedDate = expense.date;
+    TimeOfDay selectedTime =
+        TimeOfDay(hour: expense.date.hour, minute: expense.date.minute);
+
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            20 + MediaQuery.of(sheetCtx).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Edit Expense',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+
+              // Amount
+              TextField(
+                controller: amountCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  prefixText: '${widget.currencySymbol} ',
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Category
+              DropdownButtonFormField<int>(
+                initialValue: selectedCategoryId,
+                decoration:
+                    const InputDecoration(labelText: 'Category'),
+                items: categories
+                    .map((c) => DropdownMenuItem(
+                          value: c.id,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: c.color,
+                                  borderRadius:
+                                      BorderRadius.circular(3),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(c.name),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) {
+                    setSheetState(
+                        () => selectedCategoryId = v);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // Description
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(
+                    labelText: 'Description (optional)'),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 12),
+
+              // Date & Time
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: sheetCtx,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate:
+                              DateTime.now().add(const Duration(days: 1)),
+                        );
+                        if (picked != null) {
+                          setSheetState(() => selectedDate = picked);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Date',
+                          suffixIcon:
+                              Icon(Icons.calendar_today_outlined, size: 18),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                        ),
+                        child: Text(
+                          DateFormat('MMM d, yyyy').format(selectedDate),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () async {
+                        final picked = await showTimePicker(
+                          context: sheetCtx,
+                          initialTime: selectedTime,
+                        );
+                        if (picked != null) {
+                          setSheetState(() => selectedTime = picked);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Time',
+                          suffixIcon:
+                              Icon(Icons.access_time_outlined, size: 18),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                        ),
+                        child: Text(
+                          selectedTime.format(sheetCtx),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Save button
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    final amount =
+                        double.tryParse(amountCtrl.text.trim());
+                    if (amount == null || amount <= 0) return;
+                    final date = DateTime(
+                      selectedDate.year,
+                      selectedDate.month,
+                      selectedDate.day,
+                      selectedTime.hour,
+                      selectedTime.minute,
+                    );
+                    context.read<AnalyticsCubit>().updateExpense(
+                          id: expense.id,
+                          amount: amount,
+                          categoryId: selectedCategoryId,
+                          description: descCtrl.text.trim().isEmpty
+                              ? null
+                              : descCtrl.text.trim(),
+                          date: date,
+                        );
+                    Navigator.pop(sheetCtx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Expense updated'),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
+                  child: const Text('Save Changes'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ─── Expense Tile ────────────────────────────────────────────────────────────
@@ -229,12 +455,14 @@ class _ExpenseTile extends StatelessWidget {
   final CategoryEntity? category;
   final String currencySymbol;
   final VoidCallback onDismissed;
+  final VoidCallback onTap;
 
   const _ExpenseTile({
     required this.expense,
     required this.category,
     required this.currencySymbol,
     required this.onDismissed,
+    required this.onTap,
   });
 
   @override
@@ -256,7 +484,9 @@ class _ExpenseTile extends StatelessWidget {
         child: const Icon(Icons.delete_outline, color: AppColors.dangerLight),
       ),
       onDismissed: (_) => onDismissed(),
-      child: Container(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -350,6 +580,7 @@ class _ExpenseTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

@@ -86,4 +86,21 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
     await _expenses.delete(id);
     await load();
   }
+
+  Future<void> updateExpense({
+    required int id,
+    double? amount,
+    int? categoryId,
+    String? description,
+    DateTime? date,
+  }) async {
+    await _expenses.update(
+      id: id,
+      amount: amount,
+      categoryId: categoryId,
+      description: description,
+      date: date,
+    );
+    await load();
+  }
 }

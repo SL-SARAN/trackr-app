@@ -63,5 +63,15 @@ class AppColors {
     Color(0xFFEC4899), // Pink
     Color(0xFF14B8A6), // Teal
     Color(0xFF84CC16), // Lime
+    Color(0xFFF43F5E), // Rose
+    Color(0xFFD946EF), // Fuchsia
+    Color(0xFF0EA5E9), // Sky
+    Color(0xFF78716C), // Brown/Stone
+    Color(0xFF64748B), // Slate
+    Color(0xFFFF6B6B), // Coral
+    Color(0xFFDC2626), // Crimson
+    Color(0xFFA78BFA), // Lavender
+    Color(0xFF65A30D), // Olive
+    Color(0xFFEAB308), // Gold
   ];
 }
