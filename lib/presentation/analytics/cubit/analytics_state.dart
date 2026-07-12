@@ -9,6 +9,7 @@ class AnalyticsState extends Equatable {
   final List<ExpenseEntity> expenses;
   final List<CategoryEntity> categories;
   final int? filterCategoryId;
+  final String? filterType; // 'debit', 'credit', or null for all
   final DateTime? filterFrom;
   final DateTime? filterTo;
   final String? searchQuery;
@@ -20,6 +21,7 @@ class AnalyticsState extends Equatable {
     this.expenses = const [],
     this.categories = const [],
     this.filterCategoryId,
+    this.filterType,
     this.filterFrom,
     this.filterTo,
     this.searchQuery,
@@ -32,12 +34,14 @@ class AnalyticsState extends Equatable {
     List<ExpenseEntity>? expenses,
     List<CategoryEntity>? categories,
     int? filterCategoryId,
+    String? filterType,
     DateTime? filterFrom,
     DateTime? filterTo,
     String? searchQuery,
     bool? hasMore,
     String? error,
     bool clearCategoryFilter = false,
+    bool clearTypeFilter = false,
     bool clearDateFilter = false,
     bool clearSearch = false,
   }) =>
@@ -47,6 +51,7 @@ class AnalyticsState extends Equatable {
         categories: categories ?? this.categories,
         filterCategoryId:
             clearCategoryFilter ? null : (filterCategoryId ?? this.filterCategoryId),
+        filterType: clearTypeFilter ? null : (filterType ?? this.filterType),
         filterFrom: clearDateFilter ? null : (filterFrom ?? this.filterFrom),
         filterTo: clearDateFilter ? null : (filterTo ?? this.filterTo),
         searchQuery: clearSearch ? null : (searchQuery ?? this.searchQuery),
@@ -60,6 +65,7 @@ class AnalyticsState extends Equatable {
         expenses,
         categories,
         filterCategoryId,
+        filterType,
         filterFrom,
         filterTo,
         searchQuery,

@@ -21,7 +21,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     context.read<ScheduleCubit>().loadCategories();
   }
 
@@ -87,8 +87,9 @@ class _ScheduleScreenState extends State<ScheduleScreen>
           bottom: TabBar(
             controller: _tabController,
             tabs: const [
-              Tab(text: 'Add Expense'),
+              Tab(text: 'Add Entry'),
               Tab(text: 'Add Task'),
+              Tab(text: 'Recurring'),
             ],
           ),
         ),
@@ -97,6 +98,7 @@ class _ScheduleScreenState extends State<ScheduleScreen>
           children: [
             _ExpenseForm(currencySymbol: widget.currencySymbol),
             const _TaskForm(),
+            _RecurringTab(currencySymbol: widget.currencySymbol),
           ],
         ),
       ),
@@ -121,6 +123,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
   int? _selectedCategoryId;
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+  String _selectedType = 'debit';
 
   @override
   void dispose() {
@@ -143,6 +146,21 @@ class _ExpenseFormState extends State<_ExpenseForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Expense or Income Toggle
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'debit', label: Text('Expense')),
+                      ButtonSegment(value: 'credit', label: Text('Income')),
+                    ],
+                    selected: {_selectedType},
+                    onSelectionChanged: (s) => setState(() => _selectedType = s.first),
+                  ),
+                ).animate().fadeIn(duration: 300.ms),
+                
+                const SizedBox(height: 16),
+
                 // Amount
                 TextFormField(
                   controller: _amountCtrl,
@@ -166,6 +184,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
                   initialValue: _selectedCategoryId,
                   decoration: const InputDecoration(labelText: 'Category'),
                   items: categories
+                      .where((c) => c.type == _selectedType)
                       .map((c) => DropdownMenuItem(
                             value: c.id,
                             child: Row(
@@ -257,7 +276,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
                             child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                           )
-                        : const Text('Add Expense'),
+                        : Text(_selectedType == 'credit' ? 'Add Income' : 'Add Expense'),
                   ),
                 ).animate().fadeIn(duration: 300.ms, delay: 200.ms),
               ],
@@ -283,6 +302,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
           description:
               _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
           date: date,
+          type: _selectedType,
         );
     _amountCtrl.clear();
     _descCtrl.clear();
@@ -290,6 +310,7 @@ class _ExpenseFormState extends State<_ExpenseForm> {
       _selectedCategoryId = null;
       _selectedDate = DateTime.now();
       _selectedTime = TimeOfDay.now();
+      _selectedType = 'debit';
     });
   }
 }
@@ -619,5 +640,296 @@ class _DateTimePicker extends StatelessWidget {
         child: Text(value, style: theme.textTheme.bodyMedium),
       ),
     );
+  }
+}
+
+// ─── Recurring Tab ───────────────────────────────────────────────────────────
+
+class _RecurringTab extends StatelessWidget {
+  final String currencySymbol;
+  const _RecurringTab({required this.currencySymbol});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return BlocBuilder<ScheduleCubit, ScheduleState>(
+      builder: (context, state) {
+        final items = state.recurringExpenses;
+
+        return Column(
+          children: [
+            if (items.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    'No recurring expenses yet.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final category = state.categories.cast<dynamic>().firstWhere(
+                          (c) => c.id == item.categoryId,
+                          orElse: () => null,
+                        );
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          if (category != null)
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: category.color,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.title, style: theme.textTheme.titleMedium),
+                                Text(
+                                  'Repeats ${item.frequency}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    '$currencySymbol ${item.amount.toStringAsFixed(2)}',
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  item.autoLog ? 'Auto-log' : 'Remind only',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => _showAddRecurringSheet(context),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Recurring Expense'),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAddRecurringSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _AddRecurringSheet(
+        currencySymbol: currencySymbol,
+        cubit: context.read<ScheduleCubit>(),
+      ),
+    );
+  }
+}
+
+class _AddRecurringSheet extends StatefulWidget {
+  final String currencySymbol;
+  final ScheduleCubit cubit;
+
+  const _AddRecurringSheet({required this.currencySymbol, required this.cubit});
+
+  @override
+  State<_AddRecurringSheet> createState() => _AddRecurringSheetState();
+}
+
+class _AddRecurringSheetState extends State<_AddRecurringSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleCtrl = TextEditingController();
+  final _amountCtrl = TextEditingController();
+  int? _categoryId;
+  String _frequency = 'monthly';
+  DateTime _nextDueDate = DateTime.now();
+  bool _autoLog = true;
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _amountCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final viewInsets = MediaQuery.of(context).viewInsets;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: 20 + viewInsets.bottom,
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('New Recurring Expense', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _titleCtrl,
+              decoration: const InputDecoration(labelText: 'Title'),
+              validator: (v) => v!.isEmpty ? 'Enter title' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _amountCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Amount',
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 8, top: 14),
+                  child: Text(widget.currencySymbol, style: theme.textTheme.bodyLarge),
+                ),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Enter amount';
+                if (double.tryParse(v) == null) return 'Invalid number';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            BlocBuilder<ScheduleCubit, ScheduleState>(
+              bloc: widget.cubit,
+              builder: (context, state) {
+                return DropdownButtonFormField<int>(
+                  initialValue: _categoryId,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  items: state.categories
+                      .where((c) => c.type == 'debit') // Recurring items are currently expenses only
+                      .map((c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(c.name),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setState(() => _categoryId = v),
+                  validator: (v) => v == null ? 'Select category' : null,
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _frequency,
+              decoration: const InputDecoration(labelText: 'Frequency'),
+              items: const [
+                DropdownMenuItem(value: 'daily', child: Text('Daily')),
+                DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
+                DropdownMenuItem(value: 'monthly', child: Text('Monthly')),
+                DropdownMenuItem(value: 'yearly', child: Text('Yearly')),
+              ],
+              onChanged: (v) => setState(() => _frequency = v!),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _DateTimePicker(
+                    label: 'Next Due Date',
+                    value: DateFormat('MMM d, yyyy').format(_nextDueDate),
+                    icon: Icons.calendar_today,
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _nextDueDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setState(() => _nextDueDate = picked);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Auto-log expense'),
+              subtitle: const Text('Automatically add expense on due date'),
+              value: _autoLog,
+              onChanged: (v) => setState(() => _autoLog = v),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _submit,
+                child: const Text('Save'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      widget.cubit.addRecurring(
+        title: _titleCtrl.text.trim(),
+        amount: double.tryParse(_amountCtrl.text.trim()) ?? 0.0,
+        categoryId: _categoryId!,
+        frequency: _frequency,
+        nextDueDate: _nextDueDate,
+        autoLog: _autoLog,
+      );
+      Navigator.pop(context);
+    }
   }
 }

@@ -9,6 +9,7 @@ class ExpenseEntity extends Equatable {
   final DateTime date;
   final TimeOfDayTag timeOfDayTag;
   final DateTime createdAt;
+  final String type; // 'debit' or 'credit'
 
   const ExpenseEntity({
     required this.id,
@@ -18,8 +19,9 @@ class ExpenseEntity extends Equatable {
     required this.date,
     required this.timeOfDayTag,
     required this.createdAt,
+    required this.type,
   });
 
   @override
-  List<Object?> get props => [id, amount, categoryId, description, date, timeOfDayTag];
+  List<Object?> get props => [id, amount, categoryId, description, date, timeOfDayTag, type];
 }

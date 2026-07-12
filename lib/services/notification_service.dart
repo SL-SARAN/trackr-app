@@ -60,6 +60,29 @@ class NotificationService {
   /// Open the app's system notification settings.
   Future<void> openNotificationSettings() => openAppSettings();
 
+  /// Show an immediate notification.
+  Future<void> showNotification({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    await _plugin.show(
+      id,
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'trackr_general',
+          'General',
+          channelDescription: 'General notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   /// Schedule a notification at a specific time. Returns the notification ID.
   Future<int> scheduleTask({
     required int id,

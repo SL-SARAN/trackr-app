@@ -39,9 +39,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _checkBiometrics() async {
     final auth = sl<AuthService>();
-    final supported = await auth.isDeviceSupported();
-    final canCheck = await auth.canCheckBiometrics();
-    if (mounted) setState(() => _biometricsAvailable = supported || canCheck);
+    final enrolled = await auth.hasEnrolledCredentials();
+    if (mounted) {
+      setState(() => _biometricsAvailable = enrolled);
+      // Auto-reset lock to 'off' if no device lock is set but user had it enabled
+      if (!enrolled) {
+        final cubit = context.read<SettingsCubit>();
+        if (cubit.state.appLockTimeout != 'off') {
+          cubit.setAppLockTimeout('off');
+        }
+      }
+    }
   }
 
   @override

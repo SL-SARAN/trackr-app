@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/repositories/category_repository.dart';
 import '../../../data/repositories/expense_repository.dart';
 import '../../../data/repositories/task_repository.dart';
+import '../../../data/repositories/recurring_expense_repository.dart';
 import '../../../domain/entities/enums.dart';
 import '../../../services/notification_service.dart';
 import 'schedule_state.dart';
@@ -11,16 +12,19 @@ class ScheduleCubit extends Cubit<ScheduleState> {
   final ExpenseRepository _expenses;
   final TaskRepository _tasks;
   final CategoryRepository _categories;
+  final RecurringExpenseRepository _recurring;
   final NotificationService _notifications;
 
   ScheduleCubit({
     required ExpenseRepository expenses,
     required TaskRepository tasks,
     required CategoryRepository categories,
+    required RecurringExpenseRepository recurring,
     required NotificationService notifications,
   })  : _expenses = expenses,
         _tasks = tasks,
         _categories = categories,
+        _recurring = recurring,
         _notifications = notifications,
         super(const ScheduleState());
 
@@ -28,7 +32,38 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     emit(state.copyWith(status: ScheduleStatus.loading));
     try {
       final cats = await _categories.getAll();
-      emit(state.copyWith(status: ScheduleStatus.initial, categories: cats));
+      final recurring = await _recurring.getActiveRecurringExpenses();
+      emit(state.copyWith(
+        status: ScheduleStatus.initial,
+        categories: cats,
+        recurringExpenses: recurring,
+      ));
+    } catch (e) {
+      emit(state.copyWith(status: ScheduleStatus.error, error: e.toString()));
+    }
+  }
+
+  Future<void> addRecurring({
+    required String title,
+    required double amount,
+    required int categoryId,
+    required String frequency,
+    required DateTime nextDueDate,
+    required bool autoLog,
+  }) async {
+    emit(state.copyWith(status: ScheduleStatus.saving));
+    try {
+      await _recurring.addRecurringExpense(
+        title: title,
+        amount: amount,
+        categoryId: categoryId,
+        frequency: frequency,
+        nextDueDate: nextDueDate,
+        autoLog: autoLog,
+      );
+      // Reload the list
+      final recurring = await _recurring.getActiveRecurringExpenses();
+      emit(state.copyWith(status: ScheduleStatus.saved, recurringExpenses: recurring));
     } catch (e) {
       emit(state.copyWith(status: ScheduleStatus.error, error: e.toString()));
     }
@@ -39,6 +74,7 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     required int categoryId,
     String? description,
     required DateTime date,
+    required String type,
   }) async {
     emit(state.copyWith(status: ScheduleStatus.saving));
     try {
@@ -47,6 +83,7 @@ class ScheduleCubit extends Cubit<ScheduleState> {
         categoryId: categoryId,
         description: description,
         date: date,
+        type: type,
       );
       emit(state.copyWith(status: ScheduleStatus.saved));
     } catch (e) {

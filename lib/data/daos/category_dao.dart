@@ -34,6 +34,7 @@ class CategoryDao extends DatabaseAccessor<AppDatabase> with _$CategoryDaoMixin 
       (delete(categories)..where((c) => c.id.equals(id))).go();
 
   /// Returns the sum of expense amounts per category for a given date range.
+  /// Only includes debit (expense) type — excludes income.
   Future<Map<int, double>> getSpendingPerCategory({
     required DateTime from,
     required DateTime to,
@@ -41,6 +42,7 @@ class CategoryDao extends DatabaseAccessor<AppDatabase> with _$CategoryDaoMixin 
     final query = selectOnly(expenses)
       ..addColumns([expenses.categoryId, expenses.amount.sum()])
       ..where(expenses.date.isBetweenValues(from, to))
+      ..where(expenses.type.equals('debit'))
       ..groupBy([expenses.categoryId]);
 
     final rows = await query.get();

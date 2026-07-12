@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTypography {
   AppTypography._();
 
+  static const String _fontFamily = 'Roboto';
+
   static TextTheme textTheme(Color primaryText, Color secondaryText) {
     return TextTheme(
       // Display — large hero numbers (e.g. total budget)
-      displayLarge: GoogleFonts.inter(
+      displayLarge: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 48,
         fontWeight: FontWeight.w700,
         color: primaryText,
         letterSpacing: -1.5,
       ),
-      displayMedium: GoogleFonts.inter(
+      displayMedium: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 36,
         fontWeight: FontWeight.w700,
         color: primaryText,
         letterSpacing: -1.0,
       ),
-      displaySmall: GoogleFonts.inter(
+      displaySmall: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 28,
         fontWeight: FontWeight.w600,
         color: primaryText,
@@ -27,70 +31,82 @@ class AppTypography {
       ),
 
       // Headline — section titles
-      headlineLarge: GoogleFonts.inter(
+      headlineLarge: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 24,
         fontWeight: FontWeight.w600,
         color: primaryText,
       ),
-      headlineMedium: GoogleFonts.inter(
+      headlineMedium: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: primaryText,
       ),
-      headlineSmall: GoogleFonts.inter(
+      headlineSmall: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: primaryText,
       ),
 
       // Title — card headers, list headers
-      titleLarge: GoogleFonts.inter(
+      titleLarge: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: primaryText,
       ),
-      titleMedium: GoogleFonts.inter(
+      titleMedium: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w500,
         color: primaryText,
       ),
-      titleSmall: GoogleFonts.inter(
+      titleSmall: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: primaryText,
       ),
 
       // Body — content text
-      bodyLarge: GoogleFonts.inter(
+      bodyLarge: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: primaryText,
       ),
-      bodyMedium: GoogleFonts.inter(
+      bodyMedium: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: primaryText,
       ),
-      bodySmall: GoogleFonts.inter(
+      bodySmall: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: secondaryText,
       ),
 
       // Label — badges, tags, buttons
-      labelLarge: GoogleFonts.inter(
+      labelLarge: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: primaryText,
         letterSpacing: 0.1,
       ),
-      labelMedium: GoogleFonts.inter(
+      labelMedium: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: primaryText,
         letterSpacing: 0.5,
       ),
-      labelSmall: GoogleFonts.inter(
+      labelSmall: TextStyle(
+        fontFamily: _fontFamily,
         fontSize: 10,
         fontWeight: FontWeight.w500,
         color: secondaryText,

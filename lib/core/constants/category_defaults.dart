@@ -18,16 +18,34 @@ class CategoryDefaults {
       name: 'Entertainment',
       colorValue: 0xFF8B5CF6, // Violet
     ),
+    // Income Categories
+    DefaultCategory(
+      name: 'Salary',
+      colorValue: 0xFF10B981, // Emerald (Green)
+      type: 'credit',
+    ),
+    DefaultCategory(
+      name: 'Freelance',
+      colorValue: 0xFF34D399, // Green
+      type: 'credit',
+    ),
+    DefaultCategory(
+      name: 'Investment Returns',
+      colorValue: 0xFF059669, // Dark Green
+      type: 'credit',
+    ),
   ];
 }
 
 class DefaultCategory {
   final String name;
   final int colorValue;
+  final String type;
 
   const DefaultCategory({
     required this.name,
     required this.colorValue,
+    this.type = 'debit',
   });
 
   Color get color => Color(colorValue);

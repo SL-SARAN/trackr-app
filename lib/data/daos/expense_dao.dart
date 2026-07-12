@@ -12,12 +12,12 @@ class ExpenseDao extends DatabaseAccessor<AppDatabase> with _$ExpenseDaoMixin {
   Stream<List<Expense>> watchAll() =>
       (select(expenses)..orderBy([(e) => OrderingTerm.desc(e.date)])).watch();
 
-  /// Paginated query with optional filters.
   Future<List<Expense>> getFiltered({
     DateTime? from,
     DateTime? to,
     int? categoryId,
     String? searchQuery,
+    String? type,
     int limit = 50,
     int offset = 0,
   }) {
@@ -33,6 +33,9 @@ class ExpenseDao extends DatabaseAccessor<AppDatabase> with _$ExpenseDaoMixin {
       if (searchQuery != null && searchQuery.isNotEmpty) {
         condition = condition & e.description.like('%$searchQuery%');
       }
+      if (type != null) {
+        condition = condition & e.type.equals(type);
+      }
       return condition;
     });
 
@@ -43,10 +46,11 @@ class ExpenseDao extends DatabaseAccessor<AppDatabase> with _$ExpenseDaoMixin {
   Future<Map<DateTime, double>> getDailyTotals({
     required DateTime from,
     required DateTime to,
+    String type = 'debit',
   }) async {
     final query = selectOnly(expenses)
       ..addColumns([expenses.date, expenses.amount.sum()])
-      ..where(expenses.date.isBetweenValues(from, to))
+      ..where(expenses.date.isBetweenValues(from, to) & expenses.type.equals(type))
       ..groupBy([expenses.date]);
 
     final rows = await query.get();
@@ -64,10 +68,11 @@ class ExpenseDao extends DatabaseAccessor<AppDatabase> with _$ExpenseDaoMixin {
   Future<double> getTotalSpent({
     required DateTime from,
     required DateTime to,
+    String type = 'debit',
   }) async {
     final query = selectOnly(expenses)
       ..addColumns([expenses.amount.sum()])
-      ..where(expenses.date.isBetweenValues(from, to));
+      ..where(expenses.date.isBetweenValues(from, to) & expenses.type.equals(type));
     final row = await query.getSingleOrNull();
     return row?.read(expenses.amount.sum()) ?? 0.0;
   }

@@ -24,6 +24,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
         from: state.filterFrom,
         to: state.filterTo,
         categoryId: state.filterCategoryId,
+        type: state.filterType,
         searchQuery: state.searchQuery,
         limit: _pageSize,
         offset: 0,
@@ -46,6 +47,7 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
         from: state.filterFrom,
         to: state.filterTo,
         categoryId: state.filterCategoryId,
+        type: state.filterType,
         searchQuery: state.searchQuery,
         limit: _pageSize,
         offset: state.expenses.length,
@@ -61,6 +63,14 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
     emit(state.copyWith(
       filterCategoryId: categoryId ?? 0,
       clearCategoryFilter: categoryId == null,
+    ));
+    await load();
+  }
+
+  Future<void> setType(String? type) async {
+    emit(state.copyWith(
+      filterType: type ?? '',
+      clearTypeFilter: type == null,
     ));
     await load();
   }

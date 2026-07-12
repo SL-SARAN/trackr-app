@@ -6,12 +6,18 @@ import '../widgets/budget_progress_card.dart';
 import '../widgets/category_alert_strip.dart';
 import '../widgets/category_donut_chart.dart';
 import '../widgets/next_up_card.dart';
+import '../widgets/report_summary_card.dart';
 import '../widgets/trend_chart.dart';
 
 class HomeScreen extends StatefulWidget {
   final String currencySymbol;
+  final Function(int)? onNavigateToTab;
 
-  const HomeScreen({super.key, required this.currencySymbol});
+  const HomeScreen({
+    super.key,
+    required this.currencySymbol,
+    this.onNavigateToTab,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -59,6 +65,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      ReportSummaryCard(
+                        totalIncome: state.totalIncome,
+                        totalSpent: state.totalSpent,
+                        netSavings: state.netSavings,
+                        currencySymbol: widget.currencySymbol,
+                        hasMonthlyIncome: state.hasMonthlyIncome,
+                        onSetIncomeTap: () {
+                          widget.onNavigateToTab?.call(3);
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       BudgetProgressCard(
                         totalSpent: state.totalSpent,
                         budgetAmount: state.budgetAmount,

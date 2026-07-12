@@ -88,12 +88,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // Category chips + date filter
+                    // Row 1: Date range + type filters
                     SizedBox(
                       height: 34,
                       child: Row(
                         children: [
-                          // Date range button
                           _FilterChip(
                             label: state.filterFrom != null
                                 ? '${DateFormat('d/M').format(state.filterFrom!)} - ${DateFormat('d/M').format(state.filterTo ?? DateTime.now())}'
@@ -107,36 +106,62 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                 : null,
                           ),
                           const SizedBox(width: 8),
-                          // Category chips
-                          Expanded(
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: [
-                                _FilterChip(
-                                  label: 'All',
-                                  isActive: state.filterCategoryId == null,
-                                  onTap: () => context
-                                      .read<AnalyticsCubit>()
-                                      .setCategory(null),
-                                ),
-                                const SizedBox(width: 6),
-                                ...state.categories.map((cat) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 6),
-                                    child: _FilterChip(
-                                      label: cat.name,
-                                      isActive:
-                                          state.filterCategoryId == cat.id,
-                                      color: cat.color,
-                                      onTap: () => context
-                                          .read<AnalyticsCubit>()
-                                          .setCategory(cat.id),
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ),
+                          _FilterChip(
+                            label: 'All Types',
+                            isActive: state.filterType == null,
+                            onTap: () => context
+                                .read<AnalyticsCubit>()
+                                .setType(null),
                           ),
+                          const SizedBox(width: 6),
+                          _FilterChip(
+                            label: 'Expense',
+                            isActive: state.filterType == 'debit',
+                            onTap: () => context
+                                .read<AnalyticsCubit>()
+                                .setType('debit'),
+                          ),
+                          const SizedBox(width: 6),
+                          _FilterChip(
+                            label: 'Income',
+                            isActive: state.filterType == 'credit',
+                            onTap: () => context
+                                .read<AnalyticsCubit>()
+                                .setType('credit'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Row 2: Category filters (scrollable)
+                    SizedBox(
+                      height: 34,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _FilterChip(
+                            label: 'All Categories',
+                            isActive: state.filterCategoryId == null,
+                            onTap: () => context
+                                .read<AnalyticsCubit>()
+                                .setCategory(null),
+                          ),
+                          const SizedBox(width: 6),
+                          ...state.categories.map((cat) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: _FilterChip(
+                                label: cat.name,
+                                isActive:
+                                    state.filterCategoryId == cat.id,
+                                color: cat.color,
+                                onTap: () => context
+                                    .read<AnalyticsCubit>()
+                                    .setCategory(cat.id),
+                              ),
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -574,9 +599,10 @@ class _ExpenseTile extends StatelessWidget {
 
             // Amount
             Text(
-              '$currencySymbol ${expense.amount.toStringAsFixed(2)}',
+              '${expense.type == 'credit' ? '+' : '-'}$currencySymbol ${expense.amount.toStringAsFixed(2)}',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
+                color: expense.type == 'credit' ? Colors.green : null,
               ),
             ),
           ],

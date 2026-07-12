@@ -13,4 +13,6 @@ class Expenses extends Table {
   // Computed from `date` at insert time so queries can filter by it directly.
   TextColumn get timeOfDayTag => text()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  // 'debit' or 'credit'
+  TextColumn get type => text().withDefault(const Constant('debit'))();
 }

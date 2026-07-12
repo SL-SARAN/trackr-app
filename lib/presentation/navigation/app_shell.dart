@@ -6,6 +6,7 @@ import '../../data/repositories/category_repository.dart';
 import '../../data/repositories/expense_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/task_repository.dart';
+import '../../data/repositories/recurring_expense_repository.dart';
 import '../../services/notification_service.dart';
 import '../analytics/cubit/analytics_cubit.dart';
 import '../analytics/cubit/analytics_state.dart';
@@ -47,6 +48,7 @@ class _AppShellState extends State<AppShell> {
       categories: sl<CategoryRepository>(),
       budgets: sl<BudgetRepository>(),
       tasks: sl<TaskRepository>(),
+      settings: sl<SettingsRepository>(),
     );
     _analyticsCubit = AnalyticsCubit(
       expenses: sl<ExpenseRepository>(),
@@ -56,6 +58,7 @@ class _AppShellState extends State<AppShell> {
       expenses: sl<ExpenseRepository>(),
       tasks: sl<TaskRepository>(),
       categories: sl<CategoryRepository>(),
+      recurring: sl<RecurringExpenseRepository>(),
       notifications: sl<NotificationService>(),
     );
     _settingsCubit = SettingsCubit(
@@ -135,7 +138,10 @@ class _AppShellState extends State<AppShell> {
           body: IndexedStack(
             index: _currentIndex,
             children: [
-              HomeScreen(currencySymbol: _currencySymbol),
+              HomeScreen(
+                currencySymbol: _currencySymbol,
+                onNavigateToTab: _onTabSelected,
+              ),
               AnalyticsScreen(currencySymbol: _currencySymbol),
               ScheduleScreen(currencySymbol: _currencySymbol),
               const SettingsScreen(),

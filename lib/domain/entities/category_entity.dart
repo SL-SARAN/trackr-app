@@ -8,6 +8,7 @@ class CategoryEntity extends Equatable {
   final double? budgetLimit;
   final bool isSystem;
   final int sortOrder;
+  final String type;
   final DateTime createdAt;
 
   const CategoryEntity({
@@ -17,9 +18,10 @@ class CategoryEntity extends Equatable {
     this.budgetLimit,
     required this.isSystem,
     required this.sortOrder,
+    required this.type,
     required this.createdAt,
   });
 
   @override
-  List<Object?> get props => [id, name, color, budgetLimit, isSystem, sortOrder];
+  List<Object?> get props => [id, name, color, budgetLimit, isSystem, sortOrder, type];
 }

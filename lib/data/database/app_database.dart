@@ -9,24 +9,26 @@ import 'tables/expenses_table.dart';
 import 'tables/tasks_table.dart';
 import 'tables/budgets_table.dart';
 import 'tables/settings_table.dart';
+import 'tables/recurring_expenses_table.dart';
 import '../daos/category_dao.dart';
 import '../daos/expense_dao.dart';
 import '../daos/task_dao.dart';
 import '../daos/budget_dao.dart';
+import '../daos/recurring_expense_dao.dart';
 import '../daos/settings_dao.dart';
 
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [Categories, Expenses, Tasks, Budgets, AppSettings],
-  daos: [CategoryDao, ExpenseDao, TaskDao, BudgetDao, SettingsDao],
+  tables: [Categories, Expenses, Tasks, Budgets, AppSettings, RecurringExpenses],
+  daos: [CategoryDao, ExpenseDao, TaskDao, BudgetDao, SettingsDao, RecurringExpenseDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   // Bump this when the schema changes.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -34,7 +36,13 @@ class AppDatabase extends _$AppDatabase {
           await m.createAll();
         },
         onUpgrade: (m, from, to) async {
-          // Future migrations will be added here.
+          if (from < 2) {
+            await m.addColumn(expenses, expenses.type);
+            await m.createTable(recurringExpenses);
+          }
+          if (from < 3) {
+            await m.addColumn(categories, categories.type);
+          }
         },
       );
 }

@@ -18,6 +18,7 @@ class ExpenseRepository {
     DateTime? to,
     int? categoryId,
     String? searchQuery,
+    String? type,
     int limit = 50,
     int offset = 0,
   }) async {
@@ -26,27 +27,30 @@ class ExpenseRepository {
       to: to,
       categoryId: categoryId,
       searchQuery: searchQuery,
+      type: type,
       limit: limit,
       offset: offset,
     );
     return rows.map(_toEntity).toList();
   }
 
-  Future<double> getTotalSpent({required DateTime from, required DateTime to}) =>
-      _dao.getTotalSpent(from: from, to: to);
+  Future<double> getTotalSpent({required DateTime from, required DateTime to, String type = 'debit'}) =>
+      _dao.getTotalSpent(from: from, to: to, type: type);
 
   Future<Map<DateTime, double>> getDailyTotals({
     required DateTime from,
     required DateTime to,
+    String type = 'debit',
   }) =>
-      _dao.getDailyTotals(from: from, to: to);
+      _dao.getDailyTotals(from: from, to: to, type: type);
 
   Future<int> create({
     required double amount,
     required int categoryId,
     String? description,
     required DateTime date,
-  }) {
+    required String type,
+  }) async {
     final tag = DateHelper.timeOfDayTagString(date);
     return _dao.insert(ExpensesCompanion.insert(
       amount: amount,
@@ -54,6 +58,7 @@ class ExpenseRepository {
       description: Value(description),
       date: date,
       timeOfDayTag: tag,
+      type: Value(type),
     ));
   }
 
@@ -85,5 +90,6 @@ class ExpenseRepository {
         date: row.date,
         timeOfDayTag: TimeOfDayTagX.fromString(row.timeOfDayTag),
         createdAt: row.createdAt,
+        type: row.type,
       );
 }

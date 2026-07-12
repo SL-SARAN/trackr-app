@@ -28,6 +28,7 @@ class CategoryRepository {
     double? budgetLimit,
     bool isSystem = false,
     required int sortOrder,
+    String type = 'debit',
   }) =>
       _dao.insert(CategoriesCompanion.insert(
         name: name,
@@ -35,6 +36,7 @@ class CategoryRepository {
         budgetLimit: Value(budgetLimit),
         isSystem: Value(isSystem),
         sortOrder: Value(sortOrder),
+        type: Value(type),
       ));
 
   Future<bool> updateBudgetLimit(int id, double? limit) =>
@@ -73,6 +75,7 @@ class CategoryRepository {
         budgetLimit: row.budgetLimit,
         isSystem: row.isSystem,
         sortOrder: row.sortOrder,
+        type: row.type,
         createdAt: row.createdAt,
       );
 }

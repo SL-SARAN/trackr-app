@@ -78,6 +78,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
             color: cat.color,
             isSystem: true,
             sortOrder: i,
+            type: cat.type,
           );
         }
       }

@@ -10,5 +10,6 @@ class Categories extends Table {
   BoolColumn get isSystem => boolean().withDefault(const Constant(false))();
   // user-defined display order; lower = appears first
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  TextColumn get type => text().withDefault(const Constant('debit'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
