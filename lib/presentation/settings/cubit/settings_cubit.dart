@@ -21,12 +21,14 @@ class SettingsCubit extends Cubit<SettingsState> {
     final code = await _settings.get(AppConstants.keyCurrency) ?? 'USD';
     final themeMode = await _settings.get(AppConstants.keyThemeMode);
     final budget = await _budgets.getActive();
+    final lockTimeout = await _settings.get(AppConstants.keyAppLockTimeout) ?? 'off';
 
     emit(state.copyWith(
       currencySymbol: symbol,
       currencyCode: code,
       budgetAmount: budget?.amount ?? 0,
       isDarkMode: themeMode == 'dark',
+      appLockTimeout: lockTimeout,
       isLoading: false,
     ));
   }
@@ -39,5 +41,10 @@ class SettingsCubit extends Cubit<SettingsState> {
   Future<void> setDarkMode(bool dark) async {
     await _settings.set(AppConstants.keyThemeMode, dark ? 'dark' : 'light');
     emit(state.copyWith(isDarkMode: dark));
+  }
+
+  Future<void> setAppLockTimeout(String timeout) async {
+    await _settings.set(AppConstants.keyAppLockTimeout, timeout);
+    emit(state.copyWith(appLockTimeout: timeout));
   }
 }

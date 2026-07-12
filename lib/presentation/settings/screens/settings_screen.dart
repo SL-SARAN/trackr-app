@@ -6,6 +6,7 @@ import '../../../core/di/injection.dart';
 import '../../../data/repositories/category_repository.dart';
 import '../../../data/repositories/expense_repository.dart';
 import '../../../services/csv_export_service.dart';
+import '../../../services/auth_service.dart';
 import '../../../services/notification_service.dart';
 import '../../shared/cubit/theme_cubit.dart';
 import '../cubit/settings_cubit.dart';
@@ -21,17 +22,26 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = false;
+  bool _biometricsAvailable = false;
 
   @override
   void initState() {
     super.initState();
     context.read<SettingsCubit>().load();
     _checkNotificationPermission();
+    _checkBiometrics();
   }
 
   Future<void> _checkNotificationPermission() async {
     final enabled = await sl<NotificationService>().hasPermission();
     if (mounted) setState(() => _notificationsEnabled = enabled);
+  }
+
+  Future<void> _checkBiometrics() async {
+    final auth = sl<AuthService>();
+    final supported = await auth.isDeviceSupported();
+    final canCheck = await auth.canCheckBiometrics();
+    if (mounted) setState(() => _biometricsAvailable = supported || canCheck);
   }
 
   @override
@@ -181,6 +191,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 // Re-check permission when user returns
                                 _checkNotificationPermission();
                               },
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Security Section
+                    _SectionHeader(label: 'Security'),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.fingerprint,
+                              color: _biometricsAvailable
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                            ),
+                            title: Text('App Lock',
+                                style: theme.textTheme.titleSmall),
+                            subtitle: Text(
+                              _biometricsAvailable
+                                  ? _lockTimeoutLabel(state.appLockTimeout)
+                                  : 'Not available',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: _biometricsAvailable
+                                    ? null
+                                    : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            trailing: _biometricsAvailable
+                                ? const Icon(Icons.chevron_right, size: 20)
+                                : null,
+                            onTap: _biometricsAvailable
+                                ? () => _showLockTimeoutDialog(context, state.appLockTimeout)
+                                : null,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4, right: 4),
+                            child: Text(
+                              _biometricsAvailable
+                                  ? 'Uses your device\'s fingerprint, face unlock, or PIN/pattern to protect the app.'
+                                  : 'Set up a screen lock (PIN, pattern, fingerprint, or face) in your device settings to enable this feature.',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
@@ -383,6 +452,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SnackBar(content: Text('Export failed: $e')),
       );
     }
+  }
+
+  String _lockTimeoutLabel(String value) {
+    switch (value) {
+      case '0':
+        return 'Immediately';
+      case '60':
+        return 'After 1 minute';
+      case '300':
+        return 'After 5 minutes';
+      default:
+        return 'Off';
+    }
+  }
+
+  void _showLockTimeoutDialog(BuildContext context, String current) {
+    const options = [
+      ('off', 'Off', 'No lock — app opens freely'),
+      ('0', 'Immediately', 'Lock every time you leave the app'),
+      ('60', 'After 1 minute', 'Lock if away for more than 1 minute'),
+      ('300', 'After 5 minutes', 'Lock if away for more than 5 minutes'),
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          String selected = current;
+          return AlertDialog(
+            title: const Text('App Lock Timeout'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: options.map((opt) {
+                final (value, label, description) = opt;
+                final isSelected = selected == value;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    isSelected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: isSelected
+                        ? Theme.of(ctx).colorScheme.primary
+                        : null,
+                  ),
+                  title: Text(label),
+                  subtitle: Text(
+                    description,
+                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.5),
+                      fontSize: 11,
+                    ),
+                  ),
+                  onTap: () {
+                    context.read<SettingsCubit>().setAppLockTimeout(value);
+                    Navigator.pop(ctx);
+                  },
+                );
+              }).toList(),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 

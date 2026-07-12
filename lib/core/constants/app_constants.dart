@@ -28,4 +28,6 @@ class AppConstants {
   static const String keyThemeMode = 'theme_mode';
   static const String keyOnboardingDone = 'onboarding_done';
   static const String keyMonthlyBudget = 'monthly_budget';
+  static const String keyMonthlyIncome = 'monthly_income';
+  static const String keyAppLockTimeout = 'app_lock_timeout';
 }

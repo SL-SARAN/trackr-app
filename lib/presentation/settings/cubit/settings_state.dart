@@ -6,6 +6,7 @@ class SettingsState extends Equatable {
   final double? budgetAmount;
   final bool isDarkMode;
   final bool isLoading;
+  final String appLockTimeout; // 'off', '0', '60', '300'
 
   const SettingsState({
     this.currencySymbol = '\$',
@@ -13,6 +14,7 @@ class SettingsState extends Equatable {
     this.budgetAmount,
     this.isDarkMode = false,
     this.isLoading = false,
+    this.appLockTimeout = 'off',
   });
 
   SettingsState copyWith({
@@ -21,6 +23,7 @@ class SettingsState extends Equatable {
     double? budgetAmount,
     bool? isDarkMode,
     bool? isLoading,
+    String? appLockTimeout,
   }) =>
       SettingsState(
         currencySymbol: currencySymbol ?? this.currencySymbol,
@@ -28,8 +31,9 @@ class SettingsState extends Equatable {
         budgetAmount: budgetAmount ?? this.budgetAmount,
         isDarkMode: isDarkMode ?? this.isDarkMode,
         isLoading: isLoading ?? this.isLoading,
+        appLockTimeout: appLockTimeout ?? this.appLockTimeout,
       );
 
   @override
-  List<Object?> get props => [currencySymbol, currencyCode, budgetAmount, isDarkMode, isLoading];
+  List<Object?> get props => [currencySymbol, currencyCode, budgetAmount, isDarkMode, isLoading, appLockTimeout];
 }
