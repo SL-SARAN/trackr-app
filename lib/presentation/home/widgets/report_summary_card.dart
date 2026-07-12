@@ -54,7 +54,7 @@ class ReportSummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (hasMonthlyIncome) ...[
+          if (hasMonthlyIncome || totalIncome > 0) ...[
             Text(
               'Net Savings',
               style: theme.textTheme.titleMedium?.copyWith(

@@ -61,6 +61,14 @@ class ScheduleCubit extends Cubit<ScheduleState> {
         nextDueDate: nextDueDate,
         autoLog: autoLog,
       );
+
+      // Process due items immediately (e.g. if set to start Today)
+      await _recurring.processDueExpenses(
+        DateTime.now(),
+        _expenses,
+        _notifications,
+      );
+
       // Reload the list
       final recurring = await _recurring.getActiveRecurringExpenses();
       emit(state.copyWith(status: ScheduleStatus.saved, recurringExpenses: recurring));

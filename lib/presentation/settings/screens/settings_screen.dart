@@ -81,8 +81,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               : ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   children: [
-                    // Budget Section
-                    _SectionHeader(label: 'Budget'),
+                    // Budget & Income Section
+                    _SectionHeader(label: 'Budget & Income'),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -118,6 +118,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 state.budgetAmount != null && state.budgetAmount! > 0
                                     ? 'Update Budget'
                                     : 'Set Budget',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Divider(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Monthly Income', style: theme.textTheme.titleSmall),
+                              Text(
+                                state.monthlyIncome != null && state.monthlyIncome! > 0
+                                    ? '${state.currencySymbol} ${state.monthlyIncome!.toStringAsFixed(0)}'
+                                    : 'Not set',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: () => _showIncomeDialog(context, state),
+                              child: Text(
+                                state.monthlyIncome != null && state.monthlyIncome! > 0
+                                    ? 'Update Income'
+                                    : 'Set Income',
                               ),
                             ),
                           ),
@@ -418,6 +448,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final amount = double.tryParse(controller.text.trim());
               if (amount != null && amount > 0) {
                 context.read<SettingsCubit>().setBudget(amount);
+                Navigator.pop(dialogContext);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showIncomeDialog(BuildContext context, SettingsState state) {
+    final controller = TextEditingController(
+      text: state.monthlyIncome != null && state.monthlyIncome! > 0
+          ? state.monthlyIncome!.toStringAsFixed(0)
+          : '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Set Monthly Income'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofocus: true,
+          decoration: InputDecoration(
+            prefixText: '${state.currencySymbol} ',
+            hintText: 'Enter amount',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final amount = double.tryParse(controller.text.trim());
+              if (amount != null && amount > 0) {
+                context.read<SettingsCubit>().setMonthlyIncome(amount);
                 Navigator.pop(dialogContext);
               }
             },
